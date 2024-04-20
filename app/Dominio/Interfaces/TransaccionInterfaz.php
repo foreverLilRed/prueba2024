@@ -1,6 +1,6 @@
 <?php
     interface TransaccionInterfaz{
-        public function transferir(float $monto, int $de, int $para) : void;
-        public function verificar() : void ;
+        public function transferir(float $monto, int $origen, int $destino);
+        public function buscarUsuario(int $id);
     }
 ?>
