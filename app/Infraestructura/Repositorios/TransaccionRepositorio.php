@@ -2,6 +2,7 @@
     require_once __DIR__ . '/../../Dominio/Interfaces/TransaccionInterfaz.php';
     require_once __DIR__ . '/../../Dominio/Entidades/Usuario.php';
     require_once __DIR__ . '/../../Infraestructura/Externos/AutorizacionServicio.php';
+    require_once __DIR__ . '/../../Infraestructura/Externos/NotificacionServicio.php';
 
     class TransaccionRepositorio implements TransaccionInterfaz {
         protected $conexion;
@@ -19,7 +20,7 @@
                 $this->marcarTransferenciaConcretada($this->obtenerUltimaTransferencia());
                 $this->depositar($destino, $monto);
                 $this->desembolsar($origen, $monto);
-                return 'Transaccion realizada';
+                return NotificacionServicio::notificacionTransferencia($origen,$destino,$monto);
             } else {
                 $error_message = "Error al realizar la transacción: " . $this->conexion->error;
                 $this->revertirTransaccion($this->obtenerUltimaTransferencia(), $monto, $origen, $destino);

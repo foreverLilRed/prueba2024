@@ -14,16 +14,5 @@ class AutorizacionServicio{
         }
     }
 
-    public static function autorizacionNotificacion(): bool {
-        $url = 'https://run.mocky.io/v3/6839223e-cd6c-4615-817a-60e06d2b9c82';
-        $response = file_get_contents($url);
-        $data = json_decode($response, true);
-        
-        if (isset($data['message']) && $data['message'] == 'Autorizado') {
-            return true;
-        } else {
-            return false;
-        }
-    }
 }
 ?>
