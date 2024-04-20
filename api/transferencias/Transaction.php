@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../../app/Dominio/Entidades/Transaccion.php';
 require_once __DIR__ . '/../../app/Dominio/Servicios/TransaccionServicio.php';
 require_once __DIR__ . '/../../app/Infraestructura/Repositorios/TransaccionRepositorio.php';
+require_once __DIR__ . '/../../app/Infraestructura/Repositorios/UsuarioRepositorio.php';
 require_once __DIR__ . '/../../conexion.php';
 
 $json = file_get_contents('php://input');
@@ -23,7 +24,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $transaccion = new Transaccion($origen, $destino, $monto);
 
     $repositorio = new TransaccionRepositorio($conexion);
-    $transferenciaServicio = new TransaccionServicio($repositorio);
+    $repositorioUsuarios = new UsuarioRepositorio($conexion);
+    $transferenciaServicio = new TransaccionServicio($repositorio,$repositorioUsuarios);
 
     $estado = $transferenciaServicio->solicitarTransferencia($monto,$origen,$destino);
     echo $estado;

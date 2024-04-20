@@ -1,6 +1,7 @@
 <?php
     require_once __DIR__ . '/../../Dominio/Interfaces/TransaccionInterfaz.php';
     require_once __DIR__ . '/../../Dominio/Entidades/Usuario.php';
+    require_once __DIR__ . '/../../Infraestructura/Externos/AutorizacionServicio.php';
 
     class TransaccionRepositorio implements TransaccionInterfaz {
         protected $conexion;
@@ -9,29 +10,55 @@
             $this->conexion = $conexion;
         }
 
-        public function buscarUsuario(int $id){
-            $sql = "SELECT * FROM Usuarios WHERE id = $id";
-
-            $resultado = $this->conexion->query($sql);
-
-            if ($resultado->num_rows > 0) {
-                $datosUsuario = $resultado->fetch_assoc();
-                $usuario = new Usuario($datosUsuario['id'], $datosUsuario['nombre_completo'], $datosUsuario['documento_identidad'], $datosUsuario['correo_electronico'], $datosUsuario['clave'], $datosUsuario['tipo_usuario'], $datosUsuario['saldo']);
-                return $usuario;
-            } else {
-                return false;
-            }
-        }
 
         public function transferir($monto,$origen,$destino){
             $sql = "INSERT INTO Transferencias (id_usuario_origen, id_usuario_destino, monto, estado) 
             VALUES ($origen,$destino, $monto, 'pendiente')";
 
             if ($this->conexion->query($sql)) {
-                return 'Transferido correctamente';
+                $this->marcarTransferenciaConcretada($this->obtenerUltimaTransferencia());
+                $this->depositar($destino, $monto);
+                $this->desembolsar($origen, $monto);
+                return 'Transaccion realizada';
             } else {
-                return "Error al realizar la transacción: " . $this->conexion->error;
+                $error_message = "Error al realizar la transacción: " . $this->conexion->error;
+                $this->revertirTransaccion($this->obtenerUltimaTransferencia(), $monto, $origen, $destino);
+                return $error_message;
             }
+
+        }
+
+        public function depositar($id, $monto){
+
+            $this->actualizarSaldo($id,$monto);
+        }
+
+        public function desembolsar($id, $monto){
+
+            $this->actualizarSaldo($id,-$monto);
+        }
+
+        public function actualizarSaldo ($id, $valor){
+            $sql = "UPDATE Usuarios SET saldo = saldo + $valor WHERE id = $id";
+            $this->conexion->query($sql);
+        }
+
+        public function revertirTransaccion($id_transaccion, $monto, $id_origen, $id_destino) {
+            $sql = "UPDATE Transferencias SET estado = 'revertido' WHERE id = $id_transaccion";
+            $this->conexion->query($sql);
+        
+            $this->depositar($id_origen, $monto);
+            $this->desembolsar($id_destino, $monto);
+        }
+
+        public function marcarTransferenciaConcretada($id_transaccion) {
+            $sql = "UPDATE Transferencias SET estado = 'completo' WHERE id = $id_transaccion";
+            $this->conexion->query($sql);
+        }
+
+        public function obtenerUltimaTransferencia(){
+            $transferencia = $this->conexion->query("SELECT LAST_INSERT_ID()")->fetch_assoc();
+            return $ultimo_id = $transferencia['LAST_INSERT_ID()'];
         }
 
     }

@@ -1,5 +1,9 @@
 <?php
+
     require_once __DIR__ . '/../../Dominio/Interfaces/UsuarioInterfaz.php';
+    require_once __DIR__ . '/../../Dominio/Entidades/Usuario.php';
+    require_once __DIR__ . '/../../Dominio/Entidades/Comun.php';
+    require_once __DIR__ . '/../../Dominio/Entidades/Comerciante.php';
 
     class UsuarioRepositorio implements UsuarioInterfaz {
         protected $conexion;
@@ -18,9 +22,28 @@
 
             $sql = "INSERT INTO Usuarios (nombre_completo,documento_identidad,correo_electronico,clave,tipo_usuario,saldo) VALUES ('$nombre','$dni','$email','$clave','$tipo',$saldo)";
             if ($this->conexion->query($sql) == TRUE) {
-                echo "Nuevo registro insertado correctamente";
+                echo $this->conexion->insert_id;
             } else {
                 echo "Error: ".$this->conexion->error;
+            }
+
+        }
+
+        public function retornarUsuario(int $id){
+            $sql = "SELECT * FROM Usuarios WHERE id = $id";
+
+            $resultado = $this->conexion->query($sql);
+
+            if ($resultado->num_rows > 0) {
+                $datosUsuario = $resultado->fetch_assoc();
+                if($datosUsuario['tipo_usuario'] == 'comun'){
+                    $usuario = new Comun($datosUsuario['id'], $datosUsuario['nombre_completo'], $datosUsuario['documento_identidad'], $datosUsuario['correo_electronico'], $datosUsuario['clave'], $datosUsuario['saldo']);
+                } else {
+                    $usuario = new Comerciante($datosUsuario['id'], $datosUsuario['nombre_completo'], $datosUsuario['documento_identidad'], $datosUsuario['correo_electronico'], $datosUsuario['clave'], $datosUsuario['saldo']);
+                }
+                return $usuario;
+            } else {
+                return false;
             }
 
         }
