@@ -12,7 +12,7 @@
 
         public function solicitarTransferencia($monto,$idOrigen,$idDestino){
             $respuesta = $this->verificarDisponibilidadTransferencia($monto,$idOrigen,$idDestino);
-            if($respuesta){
+            if($respuesta === true){
                 return $this->repositorio->transferir($monto,$idOrigen,$idDestino);
             } else{
                 return $respuesta;
@@ -23,34 +23,23 @@
             if(AutorizacionServicio::autorizacionTransferencia()){
                 $user = $this->usuarioServicio->retornarUsuario($idOrigen);
                 $destino = $this->usuarioServicio->retornarUsuario($idDestino);
-                if($user instanceof Comun && $destino instanceof Usuario){
-                    if($this->verificarSaldo($user,$monto)){
+                
+                if($user !== false && $destino !== false && $user->getTipo() !== "comerciante"){
+                    if($this->verificarSaldo($user, $monto)){
                         return true;
                     } else {
                         return 'Saldo insuficiente';
                     }
                 } else {
-                    return 'El usuario no puede realizar transferencia o no existe el destino';
+                    return 'No existe o no puede hacer transacciones';
                 }
             } else {
-                return 'Servicio no disponible';
+                return 'Error de autorización';
             }
         }
         public function verificarSaldo($usuario, $monto){
             if($usuario->getSaldo() >= $monto){
                 return true;
-            }
-        }
-
-        public function servicioExterno() {
-            $url = 'https://run.mocky.io/v3/1f94933c-353c-4ad1-a6a5-a1a5ce2a7abe';
-            $response = file_get_contents($url);
-            $data = json_decode($response, true);
-        
-            if (isset($data['message']) && $data['message'] == 'Autorizado') {
-                return true;
-            } else {
-                return false;
             }
         }
         
